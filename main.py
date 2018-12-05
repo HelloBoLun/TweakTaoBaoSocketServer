@@ -53,7 +53,6 @@ if __name__ == "__main__":
             if r is s:
                 c, addr = s.accept()
                 inputs.append(c)
-                print(addr)
                 user=UserS(c,addr)
                 userList.append(user)
             else:
@@ -68,8 +67,6 @@ if __name__ == "__main__":
                         if r is userd.connect:
                             userList.remove(userd)
                 else:
-                    print(data)
-                    print(addr)
                     for userd in userList:
                         if r is userd.connect:
                             handleData(json.loads(data),userd)
