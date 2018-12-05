@@ -70,7 +70,6 @@ if __name__ == "__main__":
                 else:
                     print(data)
                     print(addr)
-                    c.send('我的回复')
                     for userd in userList:
                         if r is userd.connect:
                             handleData(json.loads(data),userd)
