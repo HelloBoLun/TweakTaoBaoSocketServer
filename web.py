@@ -1,29 +1,29 @@
 # -*- coding: utf-8 -*-
+from gevent import monkey
+from gevent.pywsgi import WSGIServer
 from flask import Flask, request
 from selenium import webdriver
 import time
 import requests
-import json
+import ujson
 import socket
-imgPath=""
 from selenium.webdriver.chrome.options import Options
-from gevent import monkey
-from gevent.pywsgi import WSGIServer
-from mitmproxy import ctx
-import mitmproxy.http
+from threading import Thread,currentThread,activeCount
+import multiprocessing
+import signal
+# monkey.patch_all()
 import subprocess
-import os
 # import commands
 import threading
 import py_compile
 import logging
-monkey.patch_all()
+import mySocket
 # subprocess.Popen('runServer.sh', shell=False)
 app = Flask(__name__)
 _chrome_options = Options()
 _chrome_options._arguments= ['disable-infobars']
-_chrome_options.add_argument('--proxy-server=http://127.0.0.1:5555')
-driver = webdriver.Chrome(executable_path='/Users/chenbolun/Downloads/chromedriver 4', chrome_options=_chrome_options)
+# _chrome_options.add_argument('--proxy-server=http://127.0.0.1:5555')
+driver = webdriver.Chrome(executable_path='/Users/chenbolun/Downloads/chromedriver', chrome_options=_chrome_options)
 is_Login=False
 cooks_map = {}
 cookiestr =''
@@ -35,6 +35,7 @@ myname = socket.getfqdn(socket.gethostname())
 myaddr = socket.gethostbyname(myname)
 errorNum=0
 lastTime=0
+socketPID=0
 
 @app.route('/NoLogin')
 def NoLogin():
@@ -62,9 +63,12 @@ def Loginok():
     except:
         pass
     return str(is_Login)
+myServer=mySocket.mySocketM(myaddr,8888,Loginok)
 @app.route('/TestLogin')
 def TestLogin():
-    if is_Login:
+    global is_Login
+    if is_Login==True:
+
         driver.refresh()
         if driver.current_url.startswith('https://www.alimama.com'):
             # global is_Login
@@ -96,23 +100,22 @@ def hello_world():
 def restartDriver():
     global driver
     driver.quit()
-    driver = webdriver.Chrome(executable_path='/Users/Meijian/Documents/chromedriver', chrome_options=_chrome_options)
+    driver = webdriver.Chrome(executable_path='/Users/Meijian/Downloads/chromedriver', chrome_options=_chrome_options)
     t = {}
     t['success'] = 'True'
-    return json.dumps(t, ensure_ascii=False)
+    return ujson.dumps(t, ensure_ascii=False)
     # return str(True)
 
 def test_login_ok():
     driver.refresh()
-    sa= driver.current_url
-    if driver.current_url.startswith('https://www.alimama.com') or driver.current_url==u'data:,':
+    if not driver.current_url.startswith('https://www.alimama.com') or driver.current_url.startswith('https://pub.alimama.com'):
         Test_get_web_info()
 
 @app.route('/getCookies')
 def getCookies():
-    if Test_Time_long()==False:
-        return '状态码为 666', 666
-    print(is_Login)
+    # if Test_Time_long()==False:
+    #     return '状态码为 666', 666
+    # print(is_Login)
     # getServerStatus()
     test_login_ok()
     if is_Login:
@@ -132,18 +135,13 @@ def getCookies():
         t = {}
         t['success'] = 'True'
         t['data'] =cookiestr
-        return json.dumps(t, ensure_ascii=False)
-
-        # return cookiestr
+        return ujson.dumps(t, ensure_ascii=False)
     else:
-        s = 'False'
-        s2 = '抱歉还没有登陆成功!'
         t = {}
-        t['success'] = s
-        t['message'] = s2
-        return json.dumps(t, ensure_ascii=False)
-        # return '{"success": False , "message" : 抱歉还没有登陆成功！}'
-        # return  'Flase'
+        t['success'] = 'False'
+        t['message'] = '抱歉还没有登陆成功!'
+        return ujson.dumps(t, ensure_ascii=False)
+
 
 @app.route('/getScreenshot')
 def Screenshot():
@@ -180,7 +178,7 @@ def go(link):
 def getHttpResponseHeader(browser):
     for responseReceived in browser.get_log('performance'):
         try:
-            response = json.loads(responseReceived[u'message'])[u'message'][u'params'][u'response']
+            response = ujson.loads(responseReceived[u'message'])[u'message'][u'params'][u'response']
             print
             if response[u'url'] == browser.current_url:
                 return response[u'headers']
@@ -202,31 +200,24 @@ def get_json_utl(url,cookies):
 
 
 def Test_get_web_info():
-    driver.get('http://pub.alimama.com/myunion.htm')
+    driver.get('https://login.taobao.com/member/login.jhtml?style=mini&newMini2=true&css_style=alimama&from=alimama&redirectURL=http%3A%2F%2Fwww.alimama.com&full_redirect=true&disableQuickLogin=true')
     driver.maximize_window()
     driver.implicitly_wait(20)
-    # try:
-    #     driver.find_element_by_xpath("//*[@id='J_menu_login']").click()
-    #     time.sleep(1)
-    # except:
-    #     pass
-    driver.switch_to.frame("taobaoLoginIfr")
     try:
         time.sleep(1)
-        driver.find_element_by_xpath("//*[@id='J_Static2Quick']").click()
-
+        img = driver.find_element_by_xpath("//*[@id='J_QRCodeImg']/img").get_attribute('src')
+        imgPath = img
+        # os.kill(socketPID, signal.SIGUSR1)
+        # signal.pause()
+        # print(imgPath)
+        myServer.getOnlineDevice(imgPath)
+        # loginURL = main.findQRRUL(imgPath,
+        #                      'https://cli.im/Api/Browser/deqr')
+        # main.sendMobileDevicesLogin(loginURL)
         # driver.find_element_by_xpath("//*[@id='J_Quick2Static']").click()
     except:
         pass
-    # get_json_utl(driver.current_url, driver.get_cookies())
-    if driver.current_url.startswith('https://www.alimama.com'):
-        driver.switch_to.parent_frame()
-        time.sleep(1)
-        driver.switch_to.frame("taobaoLoginIfr")
-        global imgPath
-        img = driver.find_element_by_xpath("//*[@id='J_QRCodeImg']/img").get_attribute('src')
-        imgPath=img
-        print(imgPath)
+
 
 def Test_get_web_info_cookies():
     driver.get('http://pub.alimama.com/myunion.htm')
@@ -288,7 +279,20 @@ def Test_Time_long():
     # app.logger.addHandler(file_handler)
     # py_compile.compile('/Users/Meijian/Documents/ALMMWeb/ALMM.py')
     # GetMobilePhonePowerInformation()
+def runWebServer():
+    print('启动web服务')
+    app.run(port=5500)
 
 if __name__ == '__main__':
-    http_server = WSGIServer((myaddr, 5500), app)
-    http_server.serve_forever()
+    # http_server = WSGIServer((myaddr, 5500), app)
+    # http_server.serve_forever()
+    # app.run(port=5500)
+    threading.Thread(target=runWebServer, name='worker').start()
+    threading.Thread(target=myServer.runSocket(), name='sock').start()
+    # p1 = multiprocessing.Process(target=main.runSocket)
+    # p2 = multiprocessing.Process(target=runWebServer)
+    # print(p1.pid)
+    # p2.start()
+    # p1.start()
+    # print(p1.pid)
+    # socketPID=p1.pid
