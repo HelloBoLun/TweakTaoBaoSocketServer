@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import socket,select   #socket模块
 import json
-from enum import Enum
+import signal
 from datetime import datetime
 import requests
 HOST='192.168.0.17'
@@ -25,7 +25,8 @@ def handleDeviceData(mes,userName):
     handleType=mes['handleType']
 
     if handleType == 'Other':
-        getOnlineDevice(mes,userName)
+        # getOnlineDevice(mes,userName)
+        print('a')
     elif handleType =='handleQRCode':
         print()
     elif handleType =='asdasd':
@@ -33,10 +34,13 @@ def handleDeviceData(mes,userName):
 
 def handleServerAData(mes,userName):
     print(mes)
-def getOnlineDevice(mes,userName):
+def getOnlineDevice(imgurl):
     loginURL=findQRRUL('https://img.alicdn.com/tfscom/TB1nM2TzgHqK1RjSZFPwu3wapXa.png', 'https://cli.im/Api/Browser/deqr')
     sendMobileDevicesLogin(loginURL)
+def receive_signal(signum, stack):
+    print('Received:', signum)
 def runSocket():
+    signal.signal(signal.SIGUSR1, receive_signal)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # 定义socket类型，网络通信，TCP
     s.bind((HOST, PORT))  # 套接字绑定的IP与端口
     s.listen(5)  # 开始TCP监听

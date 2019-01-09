@@ -23,7 +23,7 @@ app = Flask(__name__)
 _chrome_options = Options()
 _chrome_options._arguments= ['disable-infobars']
 # _chrome_options.add_argument('--proxy-server=http://127.0.0.1:5555')
-driver = webdriver.Chrome(executable_path='/Users/chenbolun/Downloads/chromedriver', chrome_options=_chrome_options)
+driver = webdriver.Chrome(executable_path='/Users/chenbolun/Downloads/chromedriver', chrome_options=_chrome_options,port=9999)
 is_Login=False
 cooks_map = {}
 cookiestr =''
@@ -52,19 +52,24 @@ def Loginok():
     global imgPath
     imgPath=''
     is_Login = True
-    try:
-        time.sleep(1)
-        driver.find_element_by_xpath("/html/body/div[4]/a").click()
-    except:
-        pass
-    try:
-        time.sleep(2)
-        driver.find_element_by_xpath("//*[@id='brix_65']/div[3]/div/span[1]").click()
-    except:
-        pass
+    # try:
+    #     ma=driver.find_element_by_xpath("/html/body/div[4]/a")
+    #     #
+    #     if ma:
+    #         ma.click()
+    # except:
+    #     pass
+    # try:
+    #     ma=driver.find_element_by_xpath("//*[@id='brix_65']/div[3]/div/span[1]")
+    #     if ma:
+    #         ma.click()
+    #     # driver.find_element_by_xpath("//*[@id='brix_65']/div[3]/div/span[1]").click()
+    # except:
+    #     pass
     return str(is_Login)
 myServer=mySocket.mySocketM(myaddr,8888,Loginok)
-@app.route('/TestLogin')
+
+
 def TestLogin():
     global is_Login
     if is_Login==True:
@@ -92,9 +97,6 @@ def Logins():
     Test_get_web_info()
     return str(is_Login)
 
-@app.route('/imgPath')
-def hello_world():
-    return imgPath
 
 @app.route('/restartDriver')
 def restartDriver():
@@ -220,18 +222,12 @@ def Test_get_web_info():
 
 
 def Test_get_web_info_cookies():
-    driver.get('http://pub.alimama.com/myunion.htm')
     driver.get('http://pub.alimama.com/myunion.htm#!/promo/self/links')
-    # driver.refresh()
-    time.sleep(2)
-    # goUrl=driver.current_url
-    # driver.get(goUrl+'#!/promo/self/links')
+    time.sleep(1)
     driver.find_element_by_xpath("//*[@id='J_originUrl']").send_keys('https://item.taobao.com/item.htm?id=553539427097')
     time.sleep(1)
     driver.find_element_by_xpath("//*[@class='promo']/button").click()
-    # driver.find_element_by_xpath("//*[@id='brix_1509']/div[1]/div[1]/div/button").click()
     time.sleep(1)
-    # driver.find_element_by_xpath("//*[@id='brix_1674']/div/button").click()
     driver.find_element_by_xpath("//*[@id='vf-dialog']/div/div/button").click()
     time.sleep(1)
     COOO=driver.get_cookies()
@@ -281,7 +277,7 @@ def Test_Time_long():
     # GetMobilePhonePowerInformation()
 def runWebServer():
     print('启动web服务')
-    app.run(port=5500)
+    app.run(port=5500,host=myaddr)
 
 if __name__ == '__main__':
     # http_server = WSGIServer((myaddr, 5500), app)
