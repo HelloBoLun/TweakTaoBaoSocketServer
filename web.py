@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from gevent import monkey
-from gevent.pywsgi import WSGIServer
 from flask import Flask, request
 from selenium import webdriver
 import time
@@ -8,22 +6,15 @@ import requests
 import ujson
 import socket
 from selenium.webdriver.chrome.options import Options
-from threading import Thread,currentThread,activeCount
-import multiprocessing
-import signal
-# monkey.patch_all()
-import subprocess
 # import commands
 import threading
-import py_compile
-import logging
+
 import mySocket
-# subprocess.Popen('runServer.sh', shell=False)
 app = Flask(__name__)
 _chrome_options = Options()
 _chrome_options._arguments= ['disable-infobars']
 # _chrome_options.add_argument('--proxy-server=http://127.0.0.1:5555')
-driver = webdriver.Chrome(executable_path='/Users/chenbolun/Downloads/chromedriver', chrome_options=_chrome_options,port=9999)
+driver = webdriver.Chrome(executable_path='/Users/chenbolun/Downloads/chromedriver 4', chrome_options=_chrome_options,port=9999)
 is_Login=False
 cooks_map = {}
 cookiestr =''
@@ -49,36 +40,10 @@ def NoLogin():
 def Loginok():
     print('登陆成功!')
     global is_Login
-    global imgPath
-    imgPath=''
     is_Login = True
-    # try:
-    #     ma=driver.find_element_by_xpath("/html/body/div[4]/a")
-    #     #
-    #     if ma:
-    #         ma.click()
-    # except:
-    #     pass
-    # try:
-    #     ma=driver.find_element_by_xpath("//*[@id='brix_65']/div[3]/div/span[1]")
-    #     if ma:
-    #         ma.click()
-    #     # driver.find_element_by_xpath("//*[@id='brix_65']/div[3]/div/span[1]").click()
-    # except:
-    #     pass
-    return str(is_Login)
-myServer=mySocket.mySocketM(myaddr,8888,Loginok)
 
+myServer=mySocket.mySocketM(myaddr,6008,Loginok)
 
-def TestLogin():
-    global is_Login
-    if is_Login==True:
-
-        driver.refresh()
-        if driver.current_url.startswith('https://www.alimama.com'):
-            # global is_Login
-            is_Login=False
-    return str(is_Login)
 
 @app.route('/currenturl')
 def get_currenturl():
@@ -101,18 +66,31 @@ def Logins():
 @app.route('/restartDriver')
 def restartDriver():
     global driver
+    global is_Login
     driver.quit()
-    driver = webdriver.Chrome(executable_path='/Users/Meijian/Downloads/chromedriver', chrome_options=_chrome_options)
+    driver = webdriver.Chrome(executable_path='/Users/chenbolun/Downloads/chromedriver 4',
+                              chrome_options=_chrome_options, port=9999)
+    is_Login = False
     t = {}
     t['success'] = 'True'
     return ujson.dumps(t, ensure_ascii=False)
     # return str(True)
 
 def test_login_ok():
-    driver.refresh()
-    if not driver.current_url.startswith('https://www.alimama.com') or driver.current_url.startswith('https://pub.alimama.com'):
-        Test_get_web_info()
-
+    global is_Login
+    if driver.current_url.startswith('https://pub.alimama.com/myunion.htm'):
+        driver.refresh()
+        if driver.current_url.startswith('https://pub.alimama.com/myunion.htm'):
+            is_Login = True
+        else:
+            is_Login = False
+    else:
+        driver.get('http://pub.alimama.com/myunion.htm#!/promo/self/links')
+        if driver.current_url.startswith('https://pub.alimama.com/myunion.htm'):
+            is_Login = True
+        else:
+            Test_get_web_info()
+            is_Login = False
 @app.route('/getCookies')
 def getCookies():
     # if Test_Time_long()==False:
@@ -204,19 +182,12 @@ def get_json_utl(url,cookies):
 def Test_get_web_info():
     driver.get('https://login.taobao.com/member/login.jhtml?style=mini&newMini2=true&css_style=alimama&from=alimama&redirectURL=http%3A%2F%2Fwww.alimama.com&full_redirect=true&disableQuickLogin=true')
     driver.maximize_window()
-    driver.implicitly_wait(20)
+    # driver.implicitly_wait(20)
     try:
         time.sleep(1)
         img = driver.find_element_by_xpath("//*[@id='J_QRCodeImg']/img").get_attribute('src')
         imgPath = img
-        # os.kill(socketPID, signal.SIGUSR1)
-        # signal.pause()
-        # print(imgPath)
         myServer.getOnlineDevice(imgPath)
-        # loginURL = main.findQRRUL(imgPath,
-        #                      'https://cli.im/Api/Browser/deqr')
-        # main.sendMobileDevicesLogin(loginURL)
-        # driver.find_element_by_xpath("//*[@id='J_Quick2Static']").click()
     except:
         pass
 

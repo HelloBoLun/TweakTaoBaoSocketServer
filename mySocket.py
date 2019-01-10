@@ -22,11 +22,12 @@ class mySocketM:
         self.method=method
         self.method_name = method.__name__
 
-    def handleDeviceData(mes, userName):
+    def handleDeviceData(self,mes, userName):
         handleType = mes['handleType']
 
         if handleType == 'Other':
             # getOnlineDevice(mes,userName)
+            self.method()
             print('a')
         elif handleType == 'handleQRCode':
             print()
@@ -52,12 +53,19 @@ class mySocketM:
     def sendMobileDevicesLogin(self,loginURL):
         if len(self.userList) < 1:
             print('没有设备登陆')
+            self.sendNullUser()
         else:
             for userName in self.userList:
                 data = {'loginTB': loginURL}
                 jsonStr = ujson.dumps(data)
                 userName.connect.send(jsonStr.encode("utf-8"))
-            self.method()
+    def sendNullUser(self):
+        url = 'https://oapi.dingtalk.com/robot/send?access_token=87fc518a597c498607c08bb6b1e7e38d52594b80e86d74fb5a981e257909b1ab'
+        headers = {"Content-Type": "application/json ;charset=utf-8 "}
+        String_textMsg = { \
+            "msgtype": "text", \
+            "text": {"content": "大佬们 ！！！没有设备在登录状态！"}}
+        response = requests.post(url, data=ujson.dumps(String_textMsg), headers=headers)
     def runSocket(self):
         # signal.signal(signal.SIGUSR1, receive_signal)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # 定义socket类型，网络通信，TCP
